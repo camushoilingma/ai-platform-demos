@@ -79,27 +79,26 @@ def train_and_evaluate(args):
     # dimensions
     num_train_examples, input_dim = train_x.shape
     num_eval_examples = eval_x.shape[0]
+    training_dataset = model.input_fn(
+        features=train_x.values,
+        labels=train_y,
+        shuffle=True,
+        num_epochs=args.num_epochs,
+        batch_size=args.batch_size)
 
+    # Pass a numpy array by passing DataFrame.values
+    validation_dataset = model.input_fn(
+        features=eval_x.values,
+        labels=eval_y,
+        shuffle=False,
+        num_epochs=args.num_epochs,
+        batch_size=num_eval_examples)
+
+ 
     # Create the Keras Model
     with strategy.scope():
         keras_model = model.create_keras_model(
             input_dim=input_dim, learning_rate=args.learning_rate)
-
-        # Pass a numpy array by passing DataFrame.values
-        training_dataset = model.input_fn(
-            features=train_x.values,
-            labels=train_y,
-            shuffle=True,
-            num_epochs=args.num_epochs,
-            batch_size=args.batch_size)
-
-        # Pass a numpy array by passing DataFrame.values
-        validation_dataset = model.input_fn(
-            features=eval_x.values,
-            labels=eval_y,
-            shuffle=False,
-            num_epochs=args.num_epochs,
-            batch_size=num_eval_examples)
 
         # Setup Learning Rate decay.
         lr_decay_cb = tf.keras.callbacks.LearningRateScheduler(
